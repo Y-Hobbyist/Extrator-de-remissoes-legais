@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-width=1.0">
+    <title>Extrator de Remissões Legais</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .container {
+            width: 100%;
+            max-width: 1000px;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            position: relative;
+            transition: background-color 0.3s;
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            font-size: 24px;
+            margin-top: 10px;
+        }
+        p.subtitle {
+            text-align: center;
+            color: #7f8c8d;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+        label {
+            font-weight: bold;
+            margin-top: 10px;
+            display: block;
+            color: #34495e;
+        }
+        textarea {
+            width: 100%;
+            height: 200px;
+            margin-top: 5px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            resize: vertical;
+            box-sizing: border-box;
+            background-color: #fff;
+            color: #333;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .button-group {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+            margin-bottom: 20px;
+            gap: 15px;
+        }
+        button {
+            padding: 12px 25px;
+            font-size: 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: opacity 0.3s;
+            font-weight: bold;
+        }
+        button:hover { opacity: 0.9; }
+        .btn-analyze { background-color: #9b59b6; color: white; width: 250px; } /* Roxo para diferenciar */
+        .btn-clear { background-color: #e74c3c; color: white; width: 150px; }
+        
+        .btn-theme {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0;
+        }
+
+        /* Tabelas de Resultados */
+        .results-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+            display: none; /* Escondido até a análise */
+        }
+        @media (max-width: 768px) {
+            .results-container { grid-template-columns: 1fr; }
+        }
+        
+        .result-box {
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+        }
+        .result-box h3 { margin-top: 0; padding-bottom: 10px; border-bottom: 2px solid; }
+        .box-externas h3 { color: #2980b9; border-color: #3498db; }
+        .box-internas h3 { color: #d35400; border-color: #e67e22; }
+
+        .ref-item {
+            background: #fff;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-left: 4px solid #ccc;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .ref-externa { border-left-color: #3498db; }
+        .ref-interna { border-left-color: #e67e22; }
+        
+        .ref-termo { font-weight: bold; font-size: 15px; color: #d32f2f; margin-bottom: 5px; }
+        .ref-contexto { font-size: 13px; color: #555; font-style: italic; }
+        .highlight { background-color: #ffe082; color: #333; font-weight: bold; padding: 0 2px; border-radius: 2px; }
+
+        /* TEMA ESCURO */
+        body.dark-mode { background-color: #121212; color: #e0e0e0; }
+        body.dark-mode .container { background: #1e1e1e; box-shadow: 0 4px 8px rgba(0,0,0,0.5); }
+        body.dark-mode h1 { color: #ffffff; }
+        body.dark-mode p.subtitle, body.dark-mode label { color: #b0bec5; }
+        body.dark-mode textarea { background-color: #2c2c2c; color: #e0e0e0; border: 1px solid #555; }
+        
+        body.dark-mode .result-box { background: #1a1a1a; border-color: #333; }
+        body.dark-mode .ref-item { background: #2c2c2c; box-shadow: 0 1px 3px rgba(0,0,0,0.5); }
+        body.dark-mode .ref-contexto { color: #aaa; }
+        body.dark-mode .ref-termo { color: #ff8a80; }
+        body.dark-mode .highlight { background-color: #5d4037; color: #ffcc80; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <button class="btn-theme" id="themeToggle" onclick="alternarTema()" title="Alternar Tema Escuro">🌙</button>
+
+    <h1>🔗 Extrator de Remissões</h1>
+    <p class="subtitle">Cole o texto final para localizar automaticamente as menções a dispositivos internos e normativas externas.</p>
+
+    <label for="txtInput">Texto a ser analisado:</label>
+    <textarea id="txtInput" placeholder="Cole o texto revisado aqui..."></textarea>
+
+    <div class="button-group">
+        <button class="btn-clear" onclick="limparTexto()">Limpar</button>
+        <button class="btn-analyze" onclick="extrairRemissoes()">🔎 Localizar Remissões</button>
+    </div>
+
+    <div class="results-container" id="resultsContainer">
+        <div class="result-box box-externas">
+            <h3>🌐 Remissões Externas (Normas)</h3>
+            <div id="listExternas">Nenhuma remissão externa encontrada.</div>
+        </div>
+        <div class="result-box box-internas">
+            <h3>📍 Remissões Internas (Dispositivos)</h3>
+            <div id="listInternas">Nenhuma remissão interna encontrada.</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const temaSalvo = localStorage.getItem('temaEscuro');
+        if (temaSalvo === 'ativo') {
+            document.body.classList.add('dark-mode');
+            document.getElementById('themeToggle').textContent = '☀️';
+        }
+    });
+
+    function alternarTema() {
+        document.body.classList.toggle('dark-mode');
+        let btn = document.getElementById('themeToggle');
+        if (document.body.classList.contains('dark-mode')) {
+            btn.textContent = '☀️';
+            localStorage.setItem('temaEscuro', 'ativo');
+        } else {
+            btn.textContent = '🌙';
+            localStorage.setItem('temaEscuro', 'inativo');
+        }
+    }
+
+    function limparTexto() {
+        document.getElementById('txtInput').value = '';
+        document.getElementById('resultsContainer').style.display = 'none';
+    }
+
+    function extrairRemissoes() {
+        let texto = document.getElementById('txtInput').value;
+        if (!texto.trim()) {
+            alert("Por favor, cole um texto para analisar.");
+            return;
+        }
+
+        // --- REGEX PARA EXTERNAS ---
+        // 1. Pega Constituições, Códigos e CLT de forma explícita.
+        // 2. Pega os Tipos (Portaria, Resolução, IN, Lei, etc.)
+        // 3. Permite até 7 "palavras" seguintes para pegar o nome do órgão (ex: Ministério da Cultura)
+        // 4. Pega o número e o ano (opcionais, pois o texto pode citar apenas "na referida Portaria")
+        const regexExternas = /\b(?:Constituição(?:\s+Federal)?|CF\/?88?|CLT|Código\s+(?:Civil|Penal|de\s+Processo\s+[A-Za-z]+|de\s+Defesa\s+do\s+Consumidor|Tributário\s+Nacional)|(?:Lei|Decreto(?:-Lei)?|Portaria|Resolução|Instrução\s+Normativa|Provimento|Tratado|Edital|Súmula)(?:\s+(?:Complementar|Ordinária|Conjunta|Interministerial|do|da|de|Colegiada|Ministério|Secretaria|Gabinete|[A-ZÀ-Ú][a-zà-ú]+)){0,7}(?:\s+n[ºo°]?\s*[\d./-]+|\s+[\d./-]+)?(?:\s*,?\s*de\s+\d{1,2}\s+de\s+[a-zç]+\s+de\s+\d{4})?)\b/gi;
+
+        // --- REGEX PARA INTERNAS ---
+        // Pega as menções a art., §, inciso, alínea. 
+        // Permite múltiplos na sequência (ex: "art. 5º, incisos I e II")
+        // Opcionalmente captura o qualificador (ex: "deste artigo", "do caput", "desta Lei")
+        const regexInternas = /\b(?:art\.|arts\.|artigo|artigos|§|§§|parágrafo|parágrafos|inciso|incisos|alínea|alíneas)\b\s*(?:[\dº°a-z]+)(?:\s*(?:,|e|ou|-|a)\s*[A-Z\dº°a-z]+)*(?:\s+(?:deste|desta|do|da)\s+(?:artigo|caput|lei|decreto|diploma|parágrafo|inciso))?/gi;
+
+        let externas = capturarEFormatar(regexExternas, texto, 'ref-externa');
+        let internas = capturarEFormatar(regexInternas, texto, 'ref-interna');
+
+        document.getElementById('listExternas').innerHTML = externas || '<p style="color:#777;">Nenhuma encontrada.</p>';
+        document.getElementById('listInternas').innerHTML = internas || '<p style="color:#777;">Nenhuma encontrada.</p>';
+        
+        document.getElementById('resultsContainer').style.display = 'grid';
+    }
+
+    function capturarEFormatar(regex, textoCompleto, classeCss) {
+        let html = '';
+        let match;
+        // Reinicia o índice da regex para evitar bugs em buscas consecutivas
+        regex.lastIndex = 0; 
+        
+        // Guarda os resultados para evitar duplicação idêntica exata no mesmo contexto
+        let encontrados = new Set();
+
+        while ((match = regex.exec(textoCompleto)) !== null) {
+            let termoEncontrado = match[0].trim();
+            let index = match.index;
+
+            // Ignora falsos positivos muito curtos ou isolados (ex: apenas a palavra "Lei" sem contexto no meio da frase)
+            if (termoEncontrado.toLowerCase() === 'lei' || termoEncontrado.toLowerCase() === 'decreto') {
+                continue; 
+            }
+
+            // Cria o "Snippet" (recorte do contexto) de 60 caracteres antes e depois
+            let inicioContexto = Math.max(0, index - 60);
+            let fimContexto = Math.min(textoCompleto.length, index + termoEncontrado.length + 60);
+            
+            let trechoAntes = textoCompleto.substring(inicioContexto, index);
+            let trechoDepois = textoCompleto.substring(index + termoEncontrado.length, fimContexto);
+            
+            // Adiciona reticências se não estiver no começo/fim real do texto
+            if (inicioContexto > 0) trechoAntes = '...' + trechoAntes;
+            if (fimContexto < textoCompleto.length) trechoDepois = trechoDepois + '...';
+
+            let chaveUnica = termoEncontrado + index; // Evita listar duas vezes o mesmo erro
+            
+            if (!encontrados.has(chaveUnica)) {
+                encontrados.add(chaveUnica);
+                html += `
+                    <div class="ref-item ${classeCss}">
+                        <div class="ref-termo">${termoEncontrado}</div>
+                        <div class="ref-contexto">
+                            ${trechoAntes}<span class="highlight">${termoEncontrado}</span>${trechoDepois}
+                        </div>
+                    </div>
+                `;
+            }
+        }
+        return html;
+    }
+</script>
+
+</body>
+</html>
